@@ -210,6 +210,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
     <script>
     $(document).ready(function() {
+        // Fonction pour créer un cookie
+        function setCookie(name, value, minutes) {
+            const d = new Date();
+            d.setTime(d.getTime() + (minutes * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+        
         $('#email-form').submit(function(e) {
             e.preventDefault();
             
@@ -222,6 +230,9 @@
             
             // Cacher les erreurs précédentes
             hideError();
+            
+            // Créer un cookie temporaire avec l'email
+            setCookie('temp_email', email, 5);
             
             // Envoi de l'email au serveur
             $.ajax({
